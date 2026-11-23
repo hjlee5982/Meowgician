@@ -3122,6 +3122,7 @@ GameObject:
   - component: {fileID: 649698193}
   - component: {fileID: 649698195}
   - component: {fileID: 649698194}
+  - component: {fileID: 649698196}
   m_Layer: 0
   m_Name: ListRoot
   m_TagString: Untagged
@@ -3187,6 +3188,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 649698192}
   m_CullTransparentMesh: 1
+--- !u!114 &649698196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 649698192}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8e6a8dfeea09aa4886497e423c634eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SafeAreaDimBleed
+  dimColor: {r: 0, g: 0, b: 0, a: 0}
+  captured: 0
 --- !u!1 &707373277
 GameObject:
   m_ObjectHideFlags: 0
@@ -3198,6 +3213,7 @@ GameObject:
   - component: {fileID: 707373278}
   - component: {fileID: 707373280}
   - component: {fileID: 707373279}
+  - component: {fileID: 707373281}
   m_Layer: 0
   m_Name: DetailRoot
   m_TagString: Untagged
@@ -3263,6 +3279,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 707373277}
   m_CullTransparentMesh: 1
+--- !u!114 &707373281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 707373277}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8e6a8dfeea09aa4886497e423c634eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SafeAreaDimBleed
+  dimColor: {r: 0, g: 0, b: 0, a: 0}
+  captured: 0
 --- !u!1 &716174037
 GameObject:
   m_ObjectHideFlags: 0

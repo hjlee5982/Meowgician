@@ -1,0 +1,19 @@
+html, body { margin: 0; padding: 0; height: 100%; background: #16161a; overflow: hidden }
+:root { --vh: 100vh }
+@supports (height: 100dvh) { :root { --vh: 100dvh } }
+
+/* 세로(9:16) 게임 화면: 창 크기에 맞춰 비율을 유지한 채 가운데에 맞춘다. */
+#unity-container { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center }
+#unity-frame { position: relative; width: min(100vw, calc(var(--vh) * 9 / 16)); height: min(var(--vh), calc(100vw * 16 / 9)); background: #000 }
+#unity-canvas { display: block; width: 100%; height: 100%; background: #000 }
+
+/* 휴대전화 브라우저: 화면 전체를 사용 */
+.unity-mobile #unity-frame { width: 100vw; height: var(--vh) }
+
+#unity-loading-bar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: none }
+#unity-logo { width: 154px; height: 130px; background: url('unity-logo-dark.png') no-repeat center }
+#unity-progress-bar-empty { width: 141px; height: 18px; margin-top: 10px; margin-left: 6.5px; background: url('progress-bar-empty-dark.png') no-repeat center }
+#unity-progress-bar-full { width: 0%; height: 18px; margin-top: 10px; background: url('progress-bar-full-dark.png') no-repeat center }
+#unity-fullscreen-button { position: absolute; right: 8px; bottom: 8px; width: 38px; height: 38px; cursor: pointer; opacity: .55; background: url('fullscreen-button.png') no-repeat center }
+#unity-fullscreen-button:hover { opacity: 1 }
+#unity-warning { position: absolute; left: 50%; top: 5%; transform: translate(-50%); background: white; padding: 10px; display: none; z-index: 5 }

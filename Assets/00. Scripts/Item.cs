@@ -35,6 +35,18 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     };
     [SerializeField] private Projectile projectilePrefab;
     [SerializeField] private Projectile additionalProjectilePrefab;
+    [Header("Outer Gap")]
+    [Tooltip("아이템의 바깥쪽 가장자리를 이만큼(px) 안쪽으로 줄여서, 가방에서 맞닿은 아이템 사이에 틈(이 값의 2배)이 생기게 한다. 0이면 사용 안 함.")]
+    [SerializeField, Min(0f)] private float outerGap = 3f;
+
+    [Header("Border Colors")]
+    [Tooltip("등급별 테두리 색 (1등급부터 순서대로). 최고 등급은 아래 반짝임 색을 대신 쓴다.")]
+    [SerializeField] private Color32[] gradeBorderColors = (Color32[])DefaultGradeBorderColors.Clone();
+    [Tooltip("최고(5)등급 테두리가 번갈아 반짝이는 색들")]
+    [SerializeField] private Color32[] topGradeBorderShimmerColors = (Color32[])DefaultTopGradeBorderShimmerColors.Clone();
+    [Tooltip("반짝임 색 하나에서 다음 색으로 넘어가는 데 걸리는 시간(초)")]
+    [SerializeField, Min(0.05f)] private float topGradeBorderShimmerStep = DefaultTopGradeBorderShimmerStep;
+
     [Header("Sparkle")]
     [Tooltip("무기 아이콘 주변에서 4갈래 별이 반짝이는 효과 사용 여부")]
     [SerializeField] private bool sparkleEnabled = true;
@@ -70,6 +82,8 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     private readonly List<int> occupiedSlots = new();
     private readonly List<int> slotsAtDragStart = new();
     private readonly List<Image> gradeImages = new();
+    private readonly List<Image> borderImages = new();
+    private bool outerGapApplied;
     private float pulsePhase;
     private bool pulseApplied;
 
@@ -79,6 +93,48 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     private Vector3 dragStartLocalScale;
     private float dragStartAngleZ;
     private float dragStartTargetAngleZ;
+
+    // 테두리 색 기본값(1등급부터). 도움말 창의 예시 아이템(GradeBorderDemo)도 같은 값을 쓴다.
+    public static readonly Color32[] DefaultGradeBorderColors =
+    {
+        new Color32(169, 138, 253, 255), // 1등급
+        new Color32(199, 252, 129, 255), // 2등급
+        new Color32(132, 233, 254, 255), // 3등급
+        new Color32(255, 255, 255, 255), // 4등급
+        new Color32(255, 255, 255, 255)  // 5등급(반짝임 색을 쓰므로 예비값)
+    };
+
+    public static readonly Color32[] DefaultTopGradeBorderShimmerColors =
+    {
+        new Color32(105, 213, 234, 255),
+        new Color32(248, 234, 49, 255),
+        new Color32(255, 255, 255, 255)
+    };
+
+    public const float DefaultTopGradeBorderShimmerStep = 0.225f;
+
+    /// <summary>등급에 맞는 테두리 색. 최고 등급이면 shimmer 색들을 시간에 따라 번갈아 보여 준다.</summary>
+    public static Color EvaluateBorderColor(
+        Color32[] gradeColors, Color32[] shimmerColors, float shimmerStep,
+        int grade, int maxGrade, float time, float phase)
+    {
+        if (shimmerColors != null && shimmerColors.Length > 0 && grade >= maxGrade)
+        {
+            int n = shimmerColors.Length;
+            float x = time / Mathf.Max(0.05f, shimmerStep) + phase / (Mathf.PI * 2f);
+            int index = Mathf.FloorToInt(x);
+            float t = x - index;
+            t = t * t * (3f - 2f * t);
+            Color a = shimmerColors[((index % n) + n) % n];
+            Color b = shimmerColors[(((index + 1) % n) + n) % n];
+            return Color.Lerp(a, b, t);
+        }
+
+        if (gradeColors == null || gradeColors.Length == 0)
+            return Color.black;
+
+        return gradeColors[Mathf.Clamp(grade - 1, 0, gradeColors.Length - 1)];
+    }
 
     public enum BuffOptionType
     {
@@ -140,6 +196,7 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         rectTransform.localEulerAngles = new Vector3(0f, 0f, angleZ);
 
         CacheShapeCells();
+        ApplyOuterGap();
         CacheGradeImages();
         ApplyGradeColor();
         ApplyGameData();
@@ -182,6 +239,7 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     private void Update()
     {
         UpdateGradePulse();
+        if (IsTopGrade) ApplyBorderColor();
 
         if (inventoryManager != null && inventoryManager.DisableRotation) return;
         if (!isDragging) return;
@@ -500,14 +558,92 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         }
     }
 
+    /// <summary>
+    /// 아이템 모양의 "바깥쪽" 변(옆에 같은 아이템의 칸이 없는 변)을 outerGap만큼 안쪽으로 줄인다.
+    /// 칸 테두리와 등급 색 채움을 함께 줄이므로 테두리 두께는 그대로이고, 같은 아이템 안쪽 이음매는 건드리지 않는다.
+    /// 칸 위치를 읽는 CacheShapeCells 이후에 한 번만 호출한다.
+    /// </summary>
+    private void ApplyOuterGap()
+    {
+        if (outerGapApplied || outerGap <= 0f) return;
+        outerGapApplied = true;
+
+        var cells = new List<RectTransform>();
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            Transform child = transform.GetChild(i);
+            if (child.name != "Block" && child.name != "Pivot") continue;
+            if (child is RectTransform rt) cells.Add(rt);
+        }
+
+        // 먼저 모든 칸의 "이웃 여부"를 원래 위치로 판단한 뒤에 줄인다.
+        float tolerance = cellSize * 0.1f;
+        var originals = new Vector2[cells.Count];
+        for (int i = 0; i < cells.Count; i++)
+            originals[i] = cells[i].anchoredPosition;
+
+        Vector2[] dirs = { Vector2.left, Vector2.right, Vector2.up, Vector2.down };
+        for (int i = 0; i < cells.Count; i++)
+        {
+            for (int d = 0; d < dirs.Length; d++)
+            {
+                Vector2 neighbor = originals[i] + dirs[d] * cellSize;
+                bool hasNeighbor = false;
+                for (int j = 0; j < cells.Count && !hasNeighbor; j++)
+                {
+                    if (j != i && (originals[j] - neighbor).sqrMagnitude < tolerance * tolerance)
+                        hasNeighbor = true;
+                }
+
+                if (!hasNeighbor)
+                    ShrinkCellSide(cells[i], dirs[d]);
+            }
+        }
+    }
+
+    private void ShrinkCellSide(RectTransform cell, Vector2 outward)
+    {
+        bool horizontal = Mathf.Abs(outward.x) > 0.5f;
+
+        Vector2 size = cell.sizeDelta;
+        Vector2 pos = cell.anchoredPosition;
+        if (horizontal)
+        {
+            size.x -= outerGap;
+            pos.x -= outward.x * outerGap * 0.5f;
+        }
+        else
+        {
+            size.y -= outerGap;
+            pos.y -= outward.y * outerGap * 0.5f;
+        }
+
+        cell.sizeDelta = size;
+        cell.anchoredPosition = pos;
+
+        // 채움(자식 Image)도 같은 쪽 끝을 같은 만큼 줄인다. (중심 위치는 부모를 따라 움직인다)
+        if (cell.Find("Image") is RectTransform fill)
+        {
+            Vector2 fillSize = fill.sizeDelta;
+            if (horizontal) fillSize.x -= outerGap;
+            else fillSize.y -= outerGap;
+            fill.sizeDelta = fillSize;
+        }
+    }
+
     private void CacheGradeImages()
     {
         gradeImages.Clear();
+        borderImages.Clear();
 
         for (int i = 0; i < transform.childCount; i++)
         {
             Transform child = transform.GetChild(i);
             if (child.name != "Block" && child.name != "Pivot") continue;
+
+            // 칸 자체의 Image(검정)가 테두리, 자식 "Image"가 등급 색 채움이다.
+            Image borderImage = child.GetComponent<Image>();
+            if (borderImage != null) borderImages.Add(borderImage);
 
             Transform imageTransform = child.Find("Image");
             if (imageTransform == null) continue;
@@ -524,6 +660,27 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         {
             gradeImages[i].color = color;
         }
+
+        ApplyBorderColor();
+    }
+
+    private bool IsTopGrade =>
+        topGradeBorderShimmerColors != null && topGradeBorderShimmerColors.Length > 0 && grade >= MaxGrade;
+
+    private Color GetBorderColor()
+    {
+        return EvaluateBorderColor(
+            gradeBorderColors, topGradeBorderShimmerColors, topGradeBorderShimmerStep,
+            grade, MaxGrade, Time.unscaledTime, pulsePhase);
+    }
+
+    private void ApplyBorderColor()
+    {
+        if (borderImages.Count == 0) return;
+
+        Color color = GetBorderColor();
+        for (int i = 0; i < borderImages.Count; i++)
+            borderImages[i].color = color;
     }
 
     private Color GetGradeColor()

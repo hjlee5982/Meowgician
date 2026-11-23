@@ -4857,6 +4857,7 @@ GameObject:
   - component: {fileID: 343511872}
   - component: {fileID: 343511874}
   - component: {fileID: 343511873}
+  - component: {fileID: 343511875}
   m_Layer: 0
   m_Name: ItemHelp
   m_TagString: Untagged
@@ -4922,6 +4923,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 343511871}
   m_CullTransparentMesh: 1
+--- !u!114 &343511875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 343511871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8e6a8dfeea09aa4886497e423c634eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SafeAreaDimBleed
+  dimColor: {r: 0, g: 0, b: 0, a: 0}
+  captured: 0
 --- !u!1 &362687366
 GameObject:
   m_ObjectHideFlags: 0
@@ -9333,6 +9348,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 633052715}
+  - component: {fileID: 633052716}
   m_Layer: 5
   m_Name: Demo_Grade3
   m_TagString: Untagged
@@ -9361,6 +9377,19 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 105}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &633052716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 633052714}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80c94f6504e98d140a7ea38a5209dbd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GradeBorderDemo
+  grade: 3
 --- !u!1 &634809207
 GameObject:
   m_ObjectHideFlags: 0
@@ -11291,6 +11320,7 @@ GameObject:
   - component: {fileID: 772677743}
   - component: {fileID: 772677745}
   - component: {fileID: 772677744}
+  - component: {fileID: 772677746}
   m_Layer: 0
   m_Name: Dim
   m_TagString: Untagged
@@ -11355,6 +11385,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 772677742}
   m_CullTransparentMesh: 1
+--- !u!114 &772677746
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 772677742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8e6a8dfeea09aa4886497e423c634eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SafeAreaDimBleed
+  dimColor: {r: 0, g: 0, b: 0, a: 0}
+  captured: 0
 --- !u!1 &777659423
 GameObject:
   m_ObjectHideFlags: 0
@@ -12717,6 +12761,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 898721291}
+  - component: {fileID: 898721292}
   m_Layer: 5
   m_Name: Demo_Grade1_B
   m_TagString: Untagged
@@ -12747,6 +12792,19 @@ RectTransform:
   m_AnchoredPosition: {x: -40, y: 75}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &898721292
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 898721290}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80c94f6504e98d140a7ea38a5209dbd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GradeBorderDemo
+  grade: 1
 --- !u!1 &899608827
 GameObject:
   m_ObjectHideFlags: 0
@@ -25541,6 +25599,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1561325322}
+  - component: {fileID: 1561325323}
   m_Layer: 5
   m_Name: Demo_Grade1_A
   m_TagString: Untagged
@@ -25571,6 +25630,19 @@ RectTransform:
   m_AnchoredPosition: {x: -230, y: 75}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1561325323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1561325321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80c94f6504e98d140a7ea38a5209dbd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GradeBorderDemo
+  grade: 1
 --- !u!1 &1564713003
 GameObject:
   m_ObjectHideFlags: 0
@@ -26141,6 +26213,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1628230504}
+  - component: {fileID: 1628230505}
   m_Layer: 5
   m_Name: Demo_Grade2
   m_TagString: Untagged
@@ -26171,6 +26244,19 @@ RectTransform:
   m_AnchoredPosition: {x: 200, y: 75}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1628230505
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1628230503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80c94f6504e98d140a7ea38a5209dbd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GradeBorderDemo
+  grade: 2
 --- !u!1 &1630770855
 GameObject:
   m_ObjectHideFlags: 0
@@ -28996,6 +29082,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1671749693}
+  - component: {fileID: 1671749694}
   m_Layer: 5
   m_Name: Demo_Grade1
   m_TagString: Untagged
@@ -29024,6 +29111,19 @@ RectTransform:
   m_AnchoredPosition: {x: -380, y: 105}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1671749694
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1671749692}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80c94f6504e98d140a7ea38a5209dbd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GradeBorderDemo
+  grade: 1
 --- !u!1 &1672227672
 GameObject:
   m_ObjectHideFlags: 0
@@ -30030,6 +30130,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1711674646}
+  - component: {fileID: 1711674647}
   m_Layer: 5
   m_Name: Demo_Grade5
   m_TagString: Untagged
@@ -30058,6 +30159,19 @@ RectTransform:
   m_AnchoredPosition: {x: 380, y: 105}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1711674647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1711674645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80c94f6504e98d140a7ea38a5209dbd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GradeBorderDemo
+  grade: 5
 --- !u!1 &1712780269
 GameObject:
   m_ObjectHideFlags: 0
@@ -33727,6 +33841,7 @@ GameObject:
   - component: {fileID: 1953098157}
   - component: {fileID: 1953098159}
   - component: {fileID: 1953098158}
+  - component: {fileID: 1953098160}
   m_Layer: 5
   m_Name: UIBackground
   m_TagString: Untagged
@@ -33791,6 +33906,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1953098156}
   m_CullTransparentMesh: 1
+--- !u!114 &1953098160
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1953098156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8e6a8dfeea09aa4886497e423c634eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SafeAreaDimBleed
+  dimColor: {r: 0, g: 0, b: 0, a: 0}
+  captured: 0
 --- !u!1 &1966265483
 GameObject:
   m_ObjectHideFlags: 0
@@ -35176,6 +35305,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2023375944}
+  - component: {fileID: 2023375945}
   m_Layer: 5
   m_Name: Demo_Grade2
   m_TagString: Untagged
@@ -35204,6 +35334,19 @@ RectTransform:
   m_AnchoredPosition: {x: -190, y: 105}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2023375945
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2023375943}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80c94f6504e98d140a7ea38a5209dbd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GradeBorderDemo
+  grade: 2
 --- !u!1 &2025707410
 GameObject:
   m_ObjectHideFlags: 0
@@ -36883,6 +37026,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2121916521}
+  - component: {fileID: 2121916522}
   m_Layer: 5
   m_Name: Demo_Grade4
   m_TagString: Untagged
@@ -36911,6 +37055,19 @@ RectTransform:
   m_AnchoredPosition: {x: 190, y: 105}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2121916522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2121916520}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80c94f6504e98d140a7ea38a5209dbd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GradeBorderDemo
+  grade: 4
 --- !u!1 &2124048180
 GameObject:
   m_ObjectHideFlags: 0

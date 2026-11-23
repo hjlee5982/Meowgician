@@ -142,11 +142,31 @@ MonoBehaviour:
   - {r: 1, g: 0.7, b: 0.75, a: 1}
   projectilePrefab: {fileID: 5100000001, guid: 00883a62bfa118c48b61fd840ce90c56, type: 3}
   additionalProjectilePrefab: {fileID: 5100000001, guid: fb75450bc36c17d43b95164e4a89ff71, type: 3}
+  outerGap: 3
+  gradeBorderColors:
+  - serializedVersion: 2
+    rgba: 4294806185
+  - serializedVersion: 2
+    rgba: 4286708935
+  - serializedVersion: 2
+    rgba: 4294896004
+  - serializedVersion: 2
+    rgba: 4294967295
+  - serializedVersion: 2
+    rgba: 4294967295
+  topGradeBorderShimmerColors:
+  - serializedVersion: 2
+    rgba: 4293580137
+  - serializedVersion: 2
+    rgba: 4281461496
+  - serializedVersion: 2
+    rgba: 4294967295
+  topGradeBorderShimmerStep: 0.3
   sparkleEnabled: 1
   sparkleMinGrade: 4
   gradePulseEnabled: 1
   gradePulseMinGrade: 4
-  gradePulsePeriod: 2.6
+  gradePulsePeriod: 1.6
   gradePulseBrightness: 0.55
   icon: {fileID: 21300000, guid: f914d699b62c6b34e9a6a8d6a68c323a, type: 3}
   iconColor: {r: 1, g: 1, b: 1, a: 1}

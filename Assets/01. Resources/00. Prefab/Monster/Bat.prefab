@@ -266,7 +266,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6688165997714950852}
@@ -286,6 +286,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Monster
   moveSpeed: 2
+  randomSpeedBonus: 0.2
   maxHp: 16
   attackPower: 10
   dropGold: 1000
@@ -310,7 +311,7 @@ MonoBehaviour:
   projectilePrefab: {fileID: 0}
   muzzle: {fileID: 0}
   deathEffectPrefab: {fileID: 15355463253945848, guid: a1c41974712805f41a0ace8d18a116b0, type: 3}
-  deathEffectScale: 1
+  deathEffectScale: 1.2
 --- !u!50 &3959353105467664432
 Rigidbody2D:
   serializedVersion: 5

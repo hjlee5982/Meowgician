@@ -43,12 +43,8 @@ public static class GameDataRepository
     private static bool loaded;
     private static string loadError;
 
-    public static string LoadError => loadError;
-    public static bool IsLoaded => loaded;
     public static IReadOnlyDictionary<string, ItemData> Items => ItemsByPrefabKey;
     public static IReadOnlyDictionary<string, MonsterData> Monsters => MonstersByPrefabKey;
-    public static IReadOnlyList<EnhanceOptionData> AllEnhanceOptions => EnhanceOptions;
-    public static IReadOnlyList<ReinforceData> AllReinforces => ReinforceList;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Bootstrap()
@@ -360,18 +356,6 @@ public static class GameDataRepository
         return ItemsByPrefabKey.TryGetValue(prefabKey, out itemData);
     }
 
-    public static bool TryGetItemById(string id, out ItemData itemData)
-    {
-        EnsureLoaded();
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            itemData = null;
-            return false;
-        }
-
-        return ItemsById.TryGetValue(id, out itemData);
-    }
-
     public static bool TryGetMonsterByPrefabKey(string prefabKey, out MonsterData monsterData)
     {
         EnsureLoaded();
@@ -400,18 +384,6 @@ public static class GameDataRepository
     {
         EnsureLoaded();
         return StagesByOrder.TryGetValue(order, out stageData);
-    }
-
-    public static bool TryGetStageById(string id, out StageData stageData)
-    {
-        EnsureLoaded();
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            stageData = null;
-            return false;
-        }
-
-        return StagesById.TryGetValue(id, out stageData);
     }
 
     public static List<StageSpawnEntry> GetStageSpawnEntries(string stageId)

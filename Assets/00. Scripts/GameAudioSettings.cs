@@ -44,10 +44,6 @@ public static class GameAudioSettings
     /// <summary>SFX 채널 볼륨(켜짐 1, 꺼짐 0).</summary>
     public static float SfxVolume => SfxEnabled ? 1f : 0f;
 
-    public static float EffectiveBgmVolume => BgmVolume;
-
-    public static float EffectiveSfxVolume => SfxVolume;
-
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Bootstrap()
     {

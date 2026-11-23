@@ -282,6 +282,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   rotateDuration: 0.15
   cellSize: 100
+  touchDragLiftRatio: 0.1
   category: 6
   grade: 1
   gradeColors:
@@ -292,6 +293,12 @@ MonoBehaviour:
   - {r: 1, g: 0.7, b: 0.75, a: 1}
   projectilePrefab: {fileID: 0}
   additionalProjectilePrefab: {fileID: 0}
+  sparkleEnabled: 1
+  sparkleMinGrade: 4
+  gradePulseEnabled: 1
+  gradePulseMinGrade: 4
+  gradePulsePeriod: 2.6
+  gradePulseBrightness: 0.55
   icon: {fileID: 0}
   iconColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &3536998249641230320

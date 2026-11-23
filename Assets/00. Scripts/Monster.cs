@@ -8,6 +8,8 @@ using UnityEngine.UI;
 public class Monster : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 2f;
+    [Tooltip("생성될 때 기본 속도의 0 ~ 이 비율만큼 더 빠른 속도로 랜덤 설정한다. (0.2 = 기본 ~ +20%)")]
+    [SerializeField, Range(0f, 1f)] private float randomSpeedBonus = 0.2f;
     [SerializeField] private int maxHp = 1;
     [SerializeField] private int attackPower = 10;
     [SerializeField] private int dropGold = 1000;
@@ -94,7 +96,6 @@ public class Monster : MonoBehaviour
     public int AttackPower => attackPower;
     public int DropGold => dropGold;
     public int DropExp => dropExp;
-    public int ReservedDamage => reservedDamage;
     public int ExpectedRemainingHp => Mathf.Max(0, hp - reservedDamage);
     public bool CanBeTargeted =>
         !isDead && hp > 0 && ExpectedRemainingHp > 0 && HasCrossedMinLine;
@@ -139,6 +140,7 @@ public class Monster : MonoBehaviour
     private void Awake()
     {
         ApplyGameData();
+        RandomizeMoveSpeed();
         hp = Mathf.Max(1, maxHp);
         ResolveVisuals();
         ResolveColliders();
@@ -1053,6 +1055,14 @@ public class Monster : MonoBehaviour
         if (monsterData.Atk > 0) attackPower = monsterData.Atk;
         dropGold = Mathf.Max(0, monsterData.Gold);
         dropExp = Mathf.Max(0, monsterData.Exp);
+    }
+
+    private void RandomizeMoveSpeed()
+    {
+        if (randomSpeedBonus <= 0f)
+            return;
+
+        moveSpeed *= 1f + UnityEngine.Random.Range(0f, randomSpeedBonus);
     }
 
     private string GetTypeKey()

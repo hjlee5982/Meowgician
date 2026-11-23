@@ -24,7 +24,6 @@ public class BgmPlayer : MonoBehaviour
 
     public static BgmPlayer Instance { get; private set; }
 
-    public int CurrentTrack => currentTrack;
 
     private void Awake()
     {

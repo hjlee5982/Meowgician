@@ -38,7 +38,6 @@ public class Barrier : MonoBehaviour
 
     public int Hp => coreHp + bufferHp;
     public int MaxHp => maxHp;
-    public int ContactDamage => contactDamage;
 
     public event Action HpDepleted;
 
@@ -110,13 +109,6 @@ public class Barrier : MonoBehaviour
 
         if (Hp <= 0)
             HpDepleted?.Invoke();
-    }
-
-    public void RestoreFullHp()
-    {
-        bufferHp = bufferMaxHp;
-        coreHp = coreMaxHp;
-        RefreshVisuals(animateGauge: true);
     }
 
     /// <summary>잃은 체력의 절반을 회복한다(홀수면 올림). 보호막(버퍼) 쪽을 먼저 채운다.</summary>

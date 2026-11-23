@@ -125,17 +125,6 @@ public static class TitleEnhanceProgress
         return 1;
     }
 
-    public static string GetName(string id)
-    {
-        if (GameDataRepository.TryGetReinforce(id, out ReinforceData data) &&
-            !string.IsNullOrWhiteSpace(data.Name))
-        {
-            return data.Name;
-        }
-
-        return string.Empty;
-    }
-
     /// <summary>
     /// currentLevel → currentLevel+1 로 올릴 때 필요한 골드.
     /// </summary>
@@ -192,7 +181,6 @@ public static class TitleEnhanceProgress
 
     public static int CurrentEfficiencyPercent => GetEfficiencyPercent(GetLevel(EfficiencyId));
     public static int CurrentMagicPercent => GetMagicPercent(GetLevel(MagicId));
-    public static int CurrentProductivityPercent => GetProductivityPercent(GetLevel(ProductivityId));
     public static int CurrentDiscardCount => GetDiscardCount(GetLevel(DiscardId));
     public static int CurrentBarrierPercent => GetBarrierPercent(GetLevel(BarrierId));
 

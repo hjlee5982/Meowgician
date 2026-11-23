@@ -35,6 +35,21 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     };
     [SerializeField] private Projectile projectilePrefab;
     [SerializeField] private Projectile additionalProjectilePrefab;
+    [Header("Sparkle")]
+    [Tooltip("무기 아이콘 주변에서 4갈래 별이 반짝이는 효과 사용 여부")]
+    [SerializeField] private bool sparkleEnabled = true;
+    [Tooltip("이 등급 이상일 때만 반짝인다. (기본 4 = 4~5단계만, 1로 바꾸면 모든 단계)")]
+    [SerializeField, Range(1, 5)] private int sparkleMinGrade = 4;
+
+    [Header("Grade Glow Pulse")]
+    [Tooltip("아이템 배경색이 천천히 밝아졌다 원래대로 돌아오기를 반복하는 효과 사용 여부")]
+    [SerializeField] private bool gradePulseEnabled = true;
+    [Tooltip("이 등급 이상일 때만 깜빡인다. (기본 4 = 4~5단계만, 1로 바꾸면 모든 단계)")]
+    [SerializeField, Range(1, 5)] private int gradePulseMinGrade = 4;
+    [Tooltip("한 번 밝아졌다 돌아오는 데 걸리는 시간(초)")]
+    [SerializeField, Min(0.2f)] private float gradePulsePeriod = 2.6f;
+    [Tooltip("가장 밝을 때 흰색 쪽으로 섞는 비율")]
+    [SerializeField, Range(0f, 1f)] private float gradePulseBrightness = 0.55f;
     [SerializeField] private Sprite icon;
     [SerializeField] private Color iconColor = Color.white;
 
@@ -55,6 +70,8 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     private readonly List<int> occupiedSlots = new();
     private readonly List<int> slotsAtDragStart = new();
     private readonly List<Image> gradeImages = new();
+    private float pulsePhase;
+    private bool pulseApplied;
 
     private Transform dragStartParent;
     private Vector2 dragStartAnchoredPosition;
@@ -91,6 +108,8 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
 
     public Projectile ProjectilePrefab => projectilePrefab;
     public Projectile AdditionalProjectilePrefab => additionalProjectilePrefab;
+    public bool SparkleEnabled => sparkleEnabled;
+    public int SparkleMinGrade => sparkleMinGrade;
     public Sprite Icon => icon;
     public Color IconColor => iconColor;
     public int Grade => grade;
@@ -105,9 +124,7 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     public ItemCategory Category => category;
     public bool IsBuff => category == ItemCategory.Buff;
     public bool IsWeapon => !IsBuff;
-    public bool IsProjectileWeapon => IsWeapon && projectilePrefab != null;
     public BuffOptionType BuffOption => buffOptionType;
-    public float BuffOptionPercent => buffOptionPercent;
     public float BuffContributionPercent =>
         buffOptionType == BuffOptionType.None ? 0f : grade * buffOptionPercent;
 
@@ -126,6 +143,11 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         CacheGradeImages();
         ApplyGradeColor();
         ApplyGameData();
+
+        pulsePhase = UnityEngine.Random.value * Mathf.PI * 2f;
+
+        if (sparkleEnabled && GetComponent<ItemSparkle>() == null)
+            gameObject.AddComponent<ItemSparkle>();
     }
 
     private void OnDestroy()
@@ -135,8 +157,32 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
             inventoryManager.NotifyItemDragEnded(this);
     }
 
+    private void UpdateGradePulse()
+    {
+        bool eligible = gradePulseEnabled && grade >= gradePulseMinGrade && gradeImages.Count > 0;
+        if (!eligible)
+        {
+            if (pulseApplied)
+            {
+                pulseApplied = false;
+                ApplyGradeColor();
+            }
+
+            return;
+        }
+
+        // 0 → 1 → 0 을 부드럽게 반복(코사인). 원래 색에서 흰색 쪽으로 섞어 밝아진다.
+        float wave = 0.5f - 0.5f * Mathf.Cos(Time.unscaledTime * (Mathf.PI * 2f / gradePulsePeriod) + pulsePhase);
+        Color color = Color.Lerp(GetGradeColor(), Color.white, wave * gradePulseBrightness);
+        for (int i = 0; i < gradeImages.Count; i++)
+            gradeImages[i].color = color;
+        pulseApplied = true;
+    }
+
     private void Update()
     {
+        UpdateGradePulse();
+
         if (inventoryManager != null && inventoryManager.DisableRotation) return;
         if (!isDragging) return;
         if (Keyboard.current == null || !Keyboard.current.rKey.wasPressedThisFrame) return;

@@ -97,14 +97,4 @@ public class UiClickSfx : MonoBehaviour
             button.onClick.AddListener(PlayInternal);
         }
     }
-
-    /// <summary>런타임에 생성된 버튼용.</summary>
-    public static void Bind(Button button)
-    {
-        if (button == null || Instance == null)
-            return;
-
-        button.onClick.RemoveListener(Instance.PlayInternal);
-        button.onClick.AddListener(Instance.PlayInternal);
-    }
 }

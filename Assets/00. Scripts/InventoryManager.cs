@@ -882,29 +882,6 @@ public class InventoryManager : MonoBehaviour
         return clearPanel != null && target != null && target.IsChildOf(clearPanel.transform);
     }
 
-    public void TryRespawnShopItems()
-    {
-        if (HasAnyShopItem()) return;
-        RefillEmptyShopSlots();
-    }
-
-    private bool HasAnyShopItem()
-    {
-        for (int i = 0; i < shopSlots.Length; i++)
-        {
-            RectTransform shopSlot = shopSlots[i];
-            for (int childIndex = 0; childIndex < shopSlot.childCount; childIndex++)
-            {
-                if (shopSlot.GetChild(childIndex).GetComponent<Item>() != null)
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
     public void UpdateItemPreview(Item item, Vector2 screenPosition, Camera eventCamera)
     {
         EnsurePreviewStates();

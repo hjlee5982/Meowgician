@@ -80,7 +80,6 @@ public class Projectile : MonoBehaviour
     public float FireInterval => fireInterval;
     public int Damage => damage;
     public bool IsInstant => isInstant;
-    public bool IsAdditional => isAdditional;
     public Effector EffectPrefab => effectPrefab;
 
     public void ApplyCombatStats(float newRange, int newDamage, float newFireInterval)

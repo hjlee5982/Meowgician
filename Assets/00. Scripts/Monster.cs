@@ -50,6 +50,20 @@ public class Monster : MonoBehaviour
     [Tooltip("이펙트 크기 배율. 몬스터 크기에 맞게 조절한다.")]
     [SerializeField] private float deathEffectScale = 1f;
 
+    // 활성 몬스터 목록. FindObjectsByType 호출(씬 전체 탐색 + 배열 할당)을 대체한다.
+    private static readonly List<Monster> activeMonsters = new List<Monster>(64);
+    public static IReadOnlyList<Monster> Active => activeMonsters;
+
+    private void OnEnable()
+    {
+        if (!activeMonsters.Contains(this)) activeMonsters.Add(this);
+    }
+
+    private void OnDisable()
+    {
+        activeMonsters.Remove(this);
+    }
+
     public static event Action AnyDestroyed;
     public static event Action<Monster> Killed;
 
@@ -64,6 +78,9 @@ public class Monster : MonoBehaviour
     private static readonly Color NormalHitFlashColor = Color.white;
     private static readonly Color CriticalHitFlashColor = Color.red;
     private const string HitFlashShaderName = "Defense/SpriteHitFlash";
+    private const string HitFlashMaterialResource = "SpriteHitFlash";
+    private static Material hitFlashTemplate;
+    private static bool hitFlashTemplateSearched;
 
     private string dataId;
     private int hp;
@@ -80,8 +97,16 @@ public class Monster : MonoBehaviour
     private Material originalSharedMaterial;
     private Material hitFlashMaterial;
     private float displayedHpRatio = 1f;
-    private Tween hpGaugeTween;
-    private Tween hitFlashTween;
+    // 피격마다 DOTween 시퀀스/트윈을 만들면 한 프레임에 수십 번 맞을 때 생성 비용이 크다.
+    // 타이머 기반(할당 없음)으로 대체했다. 기존과 같이 unscaled 시간으로 진행한다.
+    private bool hpGaugeAnimating;
+    private float hpGaugeFrom;
+    private float hpGaugeTarget;
+    private float hpGaugeElapsed;
+    private bool hitFlashActive;
+    private bool hitFlashCritical;
+    private float hitFlashElapsed;
+    private int hitFlashPhase = -1;
     private bool suppressNormalMove;
     private bool isMovementStopped;
     private Coroutine temporaryStopRoutine;
@@ -267,6 +292,7 @@ public class Monster : MonoBehaviour
 
     private void OnDestroy()
     {
+        using var _perfDestroy = PerfProbe.Measure(PerfProbe.Id.MonsterOnDestroy);
         KillHpGaugeTween();
         KillHitFlashTween(restoreMaterial: false);
         if (temporaryStopRoutine != null)
@@ -294,6 +320,8 @@ public class Monster : MonoBehaviour
 
     private void Update()
     {
+        using var _perf = PerfProbe.Measure(PerfProbe.Id.MonsterUpdate);
+        TickHitVisuals();
         if (isDead) return;
 
         if (isMovementStopped)
@@ -533,6 +561,7 @@ public class Monster : MonoBehaviour
 
     private void TakeDamage(int amount, bool isCritical = false)
     {
+        using var _perf = PerfProbe.Measure(PerfProbe.Id.MonsterTakeDamage);
         if (isDead || amount <= 0 || hp <= 0) return;
 
         hp = Mathf.Max(0, hp - amount);
@@ -541,8 +570,12 @@ public class Monster : MonoBehaviour
         bool lethal = hp <= 0;
         if (lethal)
         {
-            BeginDeath(killed: true);
-            FinalizeDeath();
+            using (PerfProbe.Measure(PerfProbe.Id.MonsterDeath))
+            {
+                BeginDeath(killed: true);
+                FinalizeDeath();
+            }
+
             return;
         }
 
@@ -551,57 +584,130 @@ public class Monster : MonoBehaviour
 
     private void PlayHitFlash(bool isCritical = false, Action onComplete = null)
     {
-        if (bodyRenderer == null || hitFlashCount <= 0 || !EnsureHitFlashMaterial())
+        using var _perfFlash = PerfProbe.Measure(PerfProbe.Id.MonsterHitFlash);
+
+        // 빠른 경로: 이미 깜빡이는 중이면 타이머만 되감는다.
+        // 머티리얼 교체/속성 설정은 호출당 비용이 커서(관통·광역 피격은 프레임당 수십~백 번) 꼭 필요할 때만 한다.
+        if (hitFlashActive)
+        {
+            using var _perfFast = PerfProbe.Measure(PerfProbe.Id.FlashFastPath);
+            hitFlashElapsed = 0f;
+            if (isCritical != hitFlashCritical)
+            {
+                hitFlashCritical = isCritical;
+                SetFlashColor(isCritical ? CriticalHitFlashColor : NormalHitFlashColor);
+            }
+
+            if (hitFlashPhase != 0)
+            {
+                hitFlashPhase = 0;
+                SetFlashAmount(1f);
+            }
+
+            return;
+        }
+
+        using var _perfStart = PerfProbe.Measure(PerfProbe.Id.FlashStart);
+        bool ready;
+        using (PerfProbe.Measure(PerfProbe.Id.FlashEnsureMat))
+        {
+            ready = bodyRenderer != null && hitFlashCount > 0 && EnsureHitFlashMaterial();
+        }
+
+        if (!ready)
         {
             onComplete?.Invoke();
             return;
         }
 
-        KillHitFlashTween(restoreMaterial: false);
-        bodyRenderer.sharedMaterial = hitFlashMaterial;
-        SetFlashColor(isCritical ? CriticalHitFlashColor : NormalHitFlashColor);
-        SetFlashAmount(0f);
-
-        Sequence sequence = DOTween.Sequence();
-        for (int i = 0; i < hitFlashCount; i++)
+        hitFlashActive = true;
+        hitFlashCritical = isCritical;
+        hitFlashElapsed = 0f;
+        hitFlashPhase = 0;
+        using (PerfProbe.Measure(PerfProbe.Id.FlashSwapMat))
         {
-            sequence.AppendCallback(() => SetFlashAmount(1f));
-            sequence.AppendInterval(hitFlashInterval);
-            sequence.AppendCallback(() => SetFlashAmount(0f));
-            sequence.AppendInterval(hitFlashInterval);
+            bodyRenderer.sharedMaterial = hitFlashMaterial;
         }
 
-        sequence.OnComplete(() =>
+        using (PerfProbe.Measure(PerfProbe.Id.FlashSetColor))
         {
-            hitFlashTween = null;
-            RestoreOriginalMaterial();
-            onComplete?.Invoke();
-        });
-        sequence.OnKill(() =>
-        {
-            if (!waitingHitFlashBeforeDestroy)
-                RestoreOriginalMaterial();
-        });
+            SetFlashColor(isCritical ? CriticalHitFlashColor : NormalHitFlashColor);
+        }
 
-        hitFlashTween = sequence
-            .SetUpdate(true)
-            .SetLink(gameObject);
+        using (PerfProbe.Measure(PerfProbe.Id.FlashSetAmount))
+        {
+            SetFlashAmount(1f);
+        }
+    }
+
+    /// <summary>깜빡임과 체력바 보간을 진행한다. Update 맨 앞에서 호출한다.</summary>
+    private void TickHitVisuals()
+    {
+        float dt = Time.unscaledDeltaTime;
+
+        if (hitFlashActive)
+        {
+            hitFlashElapsed += dt;
+            float interval = Mathf.Max(0.0001f, hitFlashInterval);
+            int phase = (int)(hitFlashElapsed / interval);
+            if (phase >= hitFlashCount * 2)
+            {
+                hitFlashActive = false;
+                hitFlashPhase = -1;
+                RestoreOriginalMaterial();
+            }
+            else if (phase != hitFlashPhase)
+            {
+                hitFlashPhase = phase;
+                SetFlashAmount((phase & 1) == 0 ? 1f : 0f);
+            }
+        }
+
+        if (hpGaugeAnimating)
+        {
+            hpGaugeElapsed += dt;
+            float k = hpGaugeTweenDuration <= 0f ? 1f : Mathf.Clamp01(hpGaugeElapsed / hpGaugeTweenDuration);
+            float eased = 1f - (1f - k) * (1f - k); // OutQuad
+            displayedHpRatio = Mathf.LerpUnclamped(hpGaugeFrom, hpGaugeTarget, eased);
+            ApplyHpGaugeVisual(displayedHpRatio);
+            if (k >= 1f) hpGaugeAnimating = false;
+        }
     }
 
     private bool EnsureHitFlashMaterial()
     {
         if (hitFlashMaterial != null) return true;
 
-        Shader shader = Shader.Find(HitFlashShaderName);
-        if (shader == null)
+        // Shader.Find는 빌드에서 셰이더가 스트리핑되면 실패한다(에디터에서는 되어서 놓치기 쉽다).
+        // Resources의 머티리얼이 셰이더를 참조하므로 빌드에 확실히 포함된다.
+        // 한 번 실패하면 다시 찾지 않는다(피격마다 Shader.Find + 경고 로그가 큰 비용이었다).
+        if (!hitFlashTemplateSearched)
         {
-            Debug.LogWarning($"[{name}] Missing shader '{HitFlashShaderName}'. Hit flash skipped.", this);
-            return false;
+            hitFlashTemplateSearched = true;
+            hitFlashTemplate = Resources.Load<Material>(HitFlashMaterialResource);
+            if (hitFlashTemplate == null)
+            {
+                Shader shader = Shader.Find(HitFlashShaderName);
+                if (shader != null)
+                    hitFlashTemplate = new Material(shader);
+            }
+
+            if (hitFlashTemplate == null)
+                Debug.LogWarning($"[Monster] Hit flash material/shader '{HitFlashShaderName}' not found. Hit flash disabled.");
         }
 
-        hitFlashMaterial = new Material(shader);
+        if (hitFlashTemplate == null) return false;
+
+        hitFlashMaterial = new Material(hitFlashTemplate);
         hitFlashMaterial.SetColor(FlashColorId, NormalHitFlashColor);
         return true;
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetHitFlashTemplate()
+    {
+        hitFlashTemplate = null;
+        hitFlashTemplateSearched = false;
     }
 
     private void SetFlashAmount(float amount)
@@ -626,10 +732,12 @@ public class Monster : MonoBehaviour
 
     private void KillHitFlashTween(bool restoreMaterial)
     {
-        if (hitFlashTween != null)
+        if (hitFlashActive)
         {
-            hitFlashTween.Kill();
-            hitFlashTween = null;
+            hitFlashActive = false;
+            hitFlashPhase = -1;
+            if (!waitingHitFlashBeforeDestroy)
+                RestoreOriginalMaterial();
         }
 
         if (restoreMaterial)
@@ -677,7 +785,7 @@ public class Monster : MonoBehaviour
         Vector3 position = bodyRenderer != null ? bodyRenderer.bounds.center : transform.position;
         position.z = transform.position.z;
 
-        GameObject effect = Instantiate(deathEffectPrefab, position, Quaternion.identity);
+        GameObject effect = EffectPool.Spawn(deathEffectPrefab, position, Quaternion.identity);
         effect.transform.localScale *= deathEffectScale;
     }
 
@@ -955,6 +1063,7 @@ public class Monster : MonoBehaviour
 
     private void RefreshHpGauge(bool animate)
     {
+        using var _perfGauge = PerfProbe.Measure(PerfProbe.Id.MonsterHpGauge);
         ResolveHpGaugeImage();
         if (hpGaugeImage == null) return;
 
@@ -968,18 +1077,10 @@ public class Monster : MonoBehaviour
             return;
         }
 
-        hpGaugeTween = DOTween.To(
-                () => displayedHpRatio,
-                value =>
-                {
-                    displayedHpRatio = value;
-                    ApplyHpGaugeVisual(displayedHpRatio);
-                },
-                targetRatio,
-                hpGaugeTweenDuration)
-            .SetEase(Ease.OutQuad)
-            .SetUpdate(true)
-            .SetLink(gameObject);
+        hpGaugeFrom = displayedHpRatio;
+        hpGaugeTarget = targetRatio;
+        hpGaugeElapsed = 0f;
+        hpGaugeAnimating = true;
     }
 
     private void ApplyHpGaugeVisual(float ratio)
@@ -1008,9 +1109,7 @@ public class Monster : MonoBehaviour
 
     private void KillHpGaugeTween()
     {
-        if (hpGaugeTween == null) return;
-        hpGaugeTween.Kill();
-        hpGaugeTween = null;
+        hpGaugeAnimating = false;
     }
 
     /// <summary>

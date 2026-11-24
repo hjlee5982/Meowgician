@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5802170311249070361}
   - component: {fileID: 2141822211227225718}
   - component: {fileID: 8312132443014952537}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: MonsterProjectile_FireBall
   m_TagString: Untagged
   m_Icon: {fileID: 0}

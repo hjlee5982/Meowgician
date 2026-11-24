@@ -93,6 +93,7 @@ public class PlayerShooter : MonoBehaviour
 
     private void Update()
     {
+        using var _perf = PerfProbe.Measure(PerfProbe.Id.ShooterUpdate);
         bool firedThisFrame = false;
 
         if (weapons != null)
@@ -155,6 +156,7 @@ public class PlayerShooter : MonoBehaviour
 
     private bool TryFire(EquippedWeapon weapon, Monster target)
     {
+        using var _perf = PerfProbe.Measure(PerfProbe.Id.ShooterTryFire);
         if (weapon.projectilePrefab == null) return false;
 
         Projectile projectile = Instantiate(weapon.projectilePrefab, FireOrigin, Quaternion.identity);
@@ -181,11 +183,11 @@ public class PlayerShooter : MonoBehaviour
 
     private Monster FindNearestMonsterInRange(float range)
     {
-        Monster[] monsters = FindObjectsByType<Monster>(FindObjectsSortMode.None);
+        var monsters = Monster.Active;
         Monster nearest = null;
         float nearestDistance = range;
 
-        for (int i = 0; i < monsters.Length; i++)
+        for (int i = 0; i < monsters.Count; i++)
         {
             Monster monster = monsters[i];
             if (monster == null || !monster.CanBeTargeted) continue;
@@ -202,11 +204,11 @@ public class PlayerShooter : MonoBehaviour
 
     private Monster FindFarthestMonsterInRange(float range)
     {
-        Monster[] monsters = FindObjectsByType<Monster>(FindObjectsSortMode.None);
+        var monsters = Monster.Active;
         Monster farthest = null;
         float farthestDistance = -1f;
 
-        for (int i = 0; i < monsters.Length; i++)
+        for (int i = 0; i < monsters.Count; i++)
         {
             Monster monster = monsters[i];
             if (monster == null || !monster.CanBeTargeted) continue;

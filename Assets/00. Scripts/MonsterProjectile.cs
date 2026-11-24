@@ -101,7 +101,7 @@ public class MonsterProjectile : MonoBehaviour
         barrier.ApplyContactHit(damage);
 
         if (impactEffectPrefab != null)
-            Instantiate(impactEffectPrefab, transform.position, Quaternion.identity);
+            EffectPool.Spawn(impactEffectPrefab, transform.position, Quaternion.identity);
 
         Destroy(gameObject);
     }

@@ -126,6 +126,159 @@ public class GameManager : MonoBehaviour
         }
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    // ----- 개발 빌드 전용 디버그 기능 (DevTools가 사용한다) -----
+    public int DebugStage => displayedRound;
+    public bool DebugInCombat => inCombat;
+    public bool DebugIsGameOver => isGameOver;
+    public bool DebugEnhanceOpen => isEnhanceOpen;
+    public InventoryManager DebugInventory => inventoryManager;
+
+    /// <summary>지정한 스테이지의 준비 단계로 바로 이동한다. 진행 중인 전투는 정리하고, 가방 확장 단계는 건너뛴다.</summary>
+    public void DebugJumpToStage(int stage)
+    {
+        if (isGameOver) return;
+        stage = Mathf.Clamp(stage, 1, FinalStageNumber);
+
+        // 남은 몬스터가 비활성 상태로 다음 전투에 되살아나지 않게 모두 정리한다.
+        foreach (Monster m in FindObjectsByType<Monster>(FindObjectsSortMode.None))
+            if (m != null) Destroy(m.gameObject);
+        foreach (MonsterProjectile p in FindObjectsByType<MonsterProjectile>(FindObjectsSortMode.None))
+            if (p != null) Destroy(p.gameObject);
+
+        inventoryManager.DebugUnlockAllSlots();
+        isInitialExpansionPhase = false;
+        if (inventoryManager.IsExpansionPrepareMode || inventoryManager.IsClearPrepareMode)
+            inventoryManager.ExitSpecialPreparePhase();
+
+        pendingEnhanceCount = 0;
+        aliveMonsters = 0;
+        clearedStageCount = stage - 2; // ReturnToPrepare가 1을 더한다.
+        ReturnToPrepare();
+
+        gold = Mathf.Max(gold, 3000);
+        RefreshCombatHudTexts();
+        GoldChanged?.Invoke();
+    }
+
+    /// <summary>준비 단계에서 "다음" 버튼을 누른다. 눌렀으면 true.</summary>
+    public bool DebugClickNext()
+    {
+        if (isGameOver || inCombat || nextButtonComponent == null || !nextButtonComponent.interactable) return false;
+        if (!nextButton.activeInHierarchy) return false;
+        nextButtonComponent.onClick.Invoke();
+        return true;
+    }
+
+    /// <summary>레벨업 강화 선택창이 열려 있으면 첫 번째 선택지를 고른다.</summary>
+    public void DebugPickEnhance(int index = 0)
+    {
+        OnEnhanceOptionSelected(index);
+    }
+
+    // ----- 밸런싱 툴: 레벨업 강화 옵션(특성)을 자유롭게 쌓고 내리기 -----
+    // 실제 플레이에서 고른 옵션도 ApplyEnhanceOption에서 같이 기록하므로, 다시 계산해도 일관된다.
+    private readonly Dictionary<string, int> debugEnhanceCounts = new();
+
+    private void DebugRecordEnhancePick(string optionId)
+    {
+        if (string.IsNullOrEmpty(optionId)) return;
+        debugEnhanceCounts.TryGetValue(optionId, out int count);
+        debugEnhanceCounts[optionId] = count + 1;
+    }
+
+    public int DebugGetEnhanceCount(string optionId)
+    {
+        return !string.IsNullOrEmpty(optionId) && debugEnhanceCounts.TryGetValue(optionId, out int count) ? count : 0;
+    }
+
+    /// <summary>옵션 스택을 delta만큼 올리거나 내린다(0 아래로는 내려가지 않는다). 수치 보너스는 처음부터 다시 계산한다.</summary>
+    public void DebugChangeEnhanceOption(string optionId, int delta)
+    {
+        if (string.IsNullOrEmpty(optionId) || delta == 0) return;
+
+        int current = DebugGetEnhanceCount(optionId);
+        int next = Mathf.Max(0, current + delta);
+        int applied = next - current;
+        if (applied == 0) return;
+
+        debugEnhanceCounts[optionId] = next;
+        DebugApplyNonStatEffects(optionId, applied);
+        DebugRebuildEnhanceBonuses();
+    }
+
+    /// <summary>쌓아 둔 모든 옵션을 해제한다.</summary>
+    public void DebugClearEnhanceOptions()
+    {
+        foreach (KeyValuePair<string, int> pair in debugEnhanceCounts)
+        {
+            if (pair.Value > 0)
+                DebugApplyNonStatEffects(pair.Key, -pair.Value);
+        }
+
+        debugEnhanceCounts.Clear();
+        DebugRebuildEnhanceBonuses();
+    }
+
+    // 수치(공격력/공속) 외의 효과: 아이템 제거 횟수는 같이 늘리고 줄이며, 방어막 수리는 올릴 때 한 번만 적용한다.
+    private void DebugApplyNonStatEffects(string optionId, int applied)
+    {
+        List<EnhanceOptionEffectData> effects = GameDataRepository.GetEnhanceEffects(optionId);
+        for (int i = 0; i < effects.Count; i++)
+        {
+            EnhanceOptionEffectData effect = effects[i];
+            if (effect == null) continue;
+
+            if (effect.EffectType == "RemoveItem")
+                inventoryManager?.AddItemRemoveCount(applied * ParseEffectAmount(effect.Value, 1));
+            else if (effect.EffectType == "RepairBarrier" && applied > 0)
+                ResolveBarrier()?.RestoreHalfOfLostHp();
+        }
+    }
+
+    private void DebugRebuildEnhanceBonuses()
+    {
+        EnhanceBonuses.Reset();
+        foreach (KeyValuePair<string, int> pair in debugEnhanceCounts)
+        {
+            if (pair.Value <= 0) continue;
+
+            List<EnhanceOptionEffectData> effects = GameDataRepository.GetEnhanceEffects(pair.Key);
+            for (int c = 0; c < pair.Value; c++)
+            {
+                for (int i = 0; i < effects.Count; i++)
+                {
+                    EnhanceOptionEffectData effect = effects[i];
+                    if (effect == null || string.IsNullOrWhiteSpace(effect.EffectType)) continue;
+                    if (effect.EffectType == "RemoveItem" || effect.EffectType == "RepairBarrier") continue;
+
+                    EnhanceBonuses.ApplyEffect(effect.EffectType, ParseEffectFloat(effect.Value));
+                }
+            }
+        }
+
+        RefreshEquippedCombatStats();
+    }
+
+    /// <summary>골드를 더한다(밸런싱용).</summary>
+    public void DebugAddGold(int amount)
+    {
+        gold = Mathf.Max(0, gold + amount);
+        RefreshCombatHudTexts();
+        GoldChanged?.Invoke();
+    }
+
+    /// <summary>영구강화 레벨을 바꾼 뒤 바로 반영한다: 버리기 횟수 증감, 방어막 최대 체력 재계산(체력 가득), 전투 수치 갱신.</summary>
+    public void DebugOnPermanentEnhanceChanged(int discardDelta)
+    {
+        if (discardDelta != 0)
+            inventoryManager?.AddItemRemoveCount(discardDelta);
+
+        ResolveBarrier()?.DebugReapplyReinforce();
+        RefreshEquippedCombatStats();
+    }
+#endif
+
     private void OnNextClicked()
     {
         if (inventoryManager.IsExpansionPrepareMode)
@@ -615,6 +768,9 @@ public class GameManager : MonoBehaviour
     {
         if (option == null) return;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        DebugRecordEnhancePick(option.Id);
+#endif
         List<EnhanceOptionEffectData> effects = GameDataRepository.GetEnhanceEffects(option.Id);
         for (int i = 0; i < effects.Count; i++)
             ApplyEnhanceEffect(effects[i]);

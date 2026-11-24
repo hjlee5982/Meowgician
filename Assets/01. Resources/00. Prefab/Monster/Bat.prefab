@@ -112,7 +112,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4117870980264553360}
   - component: {fileID: 6636962426982941236}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: HitBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -180,7 +180,7 @@ GameObject:
   m_Component:
   - component: {fileID: 670780042896763375}
   - component: {fileID: 4497516306421713418}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Detector
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -249,7 +249,7 @@ GameObject:
   - component: {fileID: 6090063835331839072}
   - component: {fileID: 7210475841481022055}
   - component: {fileID: 3959353105467664432}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Bat
   m_TagString: Untagged
   m_Icon: {fileID: 0}

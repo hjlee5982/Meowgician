@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  세로 고정(screenOrientation=portrait)이면 Google Play가 android.hardware.screen.portrait를
+  필수 기능으로 추정해서 일부 기기(가로 전용 기기, PC용 Google Play Games 등)에서 설치가 막힌다.
+  기능을 선택사항으로 명시해 설치 가능 기기를 넓힌다. 화면 방향 자체는 그대로 세로 고정이다.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.gamenest.meowgician.portraitoptional">
+    <uses-feature
+        android:name="android.hardware.screen.portrait"
+        android:required="false" />
+</manifest>

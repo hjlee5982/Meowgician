@@ -935,6 +935,137 @@ public class InventoryManager : MonoBehaviour
         return true;
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    /// <summary>개발 빌드 전용: 잠긴 가방 칸을 모두 연다(가방 확장 단계를 건너뛰기 위함).</summary>
+    public void DebugUnlockAllSlots()
+    {
+        if (Bag == null || Bag.Slots == null) return;
+
+        for (int i = 0; i < Bag.Slots.Length; i++)
+        {
+            Slot slot = Bag.Slots[i];
+            if (slot != null && slot.IsLocked)
+                slot.Unlock();
+        }
+
+        Bag.SetExpandableOnLockedSlots(false);
+        ExpansionStateChanged?.Invoke();
+    }
+
+    /// <summary>개발 빌드 전용: 가방의 빈 칸에 지정 등급의 무기를 들어가는 만큼 채운다. 배치한 개수를 돌려준다.</summary>
+    public int DebugFillBagWithWeapons(int grade)
+    {
+        if (itemPrefabs == null || Bag == null || Bag.Slots == null) return 0;
+
+        Canvas canvas = GetComponentInParent<Canvas>();
+        Camera cam = canvas == null || canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+
+        var weapons = new List<Item>();
+        for (int i = 0; i < itemPrefabs.Length; i++)
+        {
+            ItemPrefabSpawnEntry entry = itemPrefabs[i];
+            if (entry != null && entry.prefab != null && entry.spawnEnabled && !entry.prefab.IsBuff)
+                weapons.Add(entry.prefab);
+        }
+
+        int placed = 0;
+        bool progress = true;
+        int guard = 100;
+        while (progress && guard-- > 0)
+        {
+            progress = false;
+            for (int i = 0; i < weapons.Count; i++)
+            {
+                Item item = Instantiate(weapons[i], Bag.Items);
+                item.SetGrade(grade);
+                if (DebugTryPlaceAnywhere(item, cam))
+                {
+                    placed++;
+                    progress = true;
+                }
+                else
+                {
+                    Destroy(item.gameObject);
+                }
+            }
+        }
+
+        return placed;
+    }
+
+    /// <summary>개발 빌드 전용: 등록된 아이템 프리팹 목록(중복 제거)을 돌려준다.</summary>
+    public void DebugGetItemPrefabs(List<Item> result)
+    {
+        result.Clear();
+        if (itemPrefabs == null) return;
+
+        for (int i = 0; i < itemPrefabs.Length; i++)
+        {
+            ItemPrefabSpawnEntry entry = itemPrefabs[i];
+            if (entry != null && entry.prefab != null && !result.Contains(entry.prefab))
+                result.Add(entry.prefab);
+        }
+    }
+
+    /// <summary>개발 빌드 전용: 지정 등급의 아이템을 가방의 빈 곳에 넣는다. 자리가 없으면 false.</summary>
+    public bool DebugAddItem(Item prefab, int grade)
+    {
+        if (prefab == null || Bag == null || Bag.Slots == null) return false;
+
+        Canvas canvas = GetComponentInParent<Canvas>();
+        Camera cam = canvas == null || canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+
+        Item item = Instantiate(prefab, Bag.Items);
+        item.SetGrade(grade);
+        if (DebugTryPlaceAnywhere(item, cam)) return true;
+
+        Destroy(item.gameObject);
+        return false;
+    }
+
+    /// <summary>개발 빌드 전용: 가방의 아이템을 뺀다. 차지하던 슬롯을 풀어 주고(안 풀면 슬롯이 회색 "찬 상태"로 남는다) 즉시 가방 목록에서도 뺀다.</summary>
+    public void DebugRemoveItem(Item item)
+    {
+        if (item == null) return;
+
+        if (item.OccupiedSlots.Count > 0)
+            ReleaseSlots(item.OccupiedSlots);
+
+        item.transform.SetParent(null, false);
+        Destroy(item.gameObject);
+    }
+
+    /// <summary>개발 빌드 전용: 가방을 비운다. 뺀 개수를 돌려준다.</summary>
+    public int DebugClearBag()
+    {
+        IReadOnlyList<Item> items = GetBagItems();
+        int count = items.Count;
+        for (int i = 0; i < count; i++)
+            DebugRemoveItem(items[i]);
+
+        return count;
+    }
+
+    private bool DebugTryPlaceAnywhere(Item item, Camera cam)
+    {
+        Transform pivot = item.transform.Find("Pivot");
+        if (pivot == null) return false;
+
+        Slot[] slots = Bag.Slots;
+        for (int i = 0; i < slots.Length; i++)
+        {
+            Slot slot = slots[i];
+            if (slot == null || slot.IsLocked || !slot.IsActivated) continue;
+
+            item.transform.position += slot.RectTransform.position - pivot.position;
+            Vector2 screen = RectTransformUtility.WorldToScreenPoint(cam, slot.RectTransform.position);
+            if (TryPlaceItem(item, screen, cam)) return true;
+        }
+
+        return false;
+    }
+#endif
+
     public bool TryPlaceItem(Item item, Vector2 screenPosition, Camera eventCamera)
     {
         if (preparePhaseMode == PreparePhaseMode.ItemCompress) return false;

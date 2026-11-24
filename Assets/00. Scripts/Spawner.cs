@@ -53,6 +53,7 @@ public class Spawner : MonoBehaviour
 
     private void Update()
     {
+        using var _perf = PerfProbe.Measure(PerfProbe.Id.SpawnerUpdate);
         if (debugMode)
         {
             UpdateDebugSpawn();
@@ -140,7 +141,23 @@ public class Spawner : MonoBehaviour
         position.x += offset;
         Monster spawned = Instantiate(prefab, position, Quaternion.identity);
         if (entry != null)
-            spawned.ApplyStageOverride(entry.Hp, entry.Atk, entry.Gold, entry.Exp);
+        {
+            // MonsterHpTuner가 있으면 몬스터별 체력 비율을 반영한다. 배율이 1이면 시트 값을 그대로 쓴다.
+            int hp = entry.Hp;
+            MonsterHpTuner tuner = MonsterHpTuner.Instance;
+            if (tuner != null)
+            {
+                int baseHp = entry.Hp;
+                if (baseHp <= 0 && GameDataRepository.TryGetMonsterById(entry.MonsterId, out MonsterData monsterData))
+                    baseHp = monsterData.Hp;
+
+                // pendingStageOrder 0 = 1스테이지.
+                if (tuner.TryApply(entry.MonsterId, baseHp, pendingStageOrder + 1, out int tunedHp))
+                    hp = tunedHp;
+            }
+
+            spawned.ApplyStageOverride(hp, entry.Atk, entry.Gold, entry.Exp);
+        }
 
         // pendingStageOrder 0 = 1스테이지 표시. 스테이지%만큼 이동 속도 증가(100 = 2배).
         spawned.ApplyStageMoveSpeedBonus(pendingStageOrder + 1);

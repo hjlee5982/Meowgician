@@ -44,7 +44,14 @@ public static class GameDataRepository
     private static string loadError;
 
     public static IReadOnlyDictionary<string, ItemData> Items => ItemsByPrefabKey;
-    public static IReadOnlyDictionary<string, MonsterData> Monsters => MonstersByPrefabKey;
+    public static IReadOnlyDictionary<string, MonsterData> Monsters
+    {
+        get
+        {
+            EnsureLoaded();
+            return MonstersByPrefabKey;
+        }
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Bootstrap()
@@ -454,6 +461,16 @@ public static class GameDataRepository
         }
 
         return false;
+    }
+
+    /// <summary>레벨업 때 고를 수 있는 모든 강화 옵션(개발용 밸런싱 툴 등에서 사용).</summary>
+    public static IReadOnlyList<EnhanceOptionData> AllEnhanceOptions
+    {
+        get
+        {
+            EnsureLoaded();
+            return EnhanceOptions;
+        }
     }
 
     public static List<EnhanceOptionData> PickRandomEnhanceOptions(int count)

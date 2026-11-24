@@ -113,7 +113,7 @@ GameObject:
   - component: {fileID: 6090063835331839072}
   - component: {fileID: 7210475841481022055}
   - component: {fileID: 3959353105467664432}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Slime
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -364,7 +364,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6939688754572789281}
   - component: {fileID: 2852508084261262371}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Detector
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -548,7 +548,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3579274988455829231}
   - component: {fileID: 1592213523379871055}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: HitBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7725744026473503423}
   - component: {fileID: 5193264615511624252}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: HitBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -79,7 +79,7 @@ GameObject:
   - component: {fileID: 5064745784832870158}
   - component: {fileID: 1783988693998977772}
   - component: {fileID: 6104496218118104007}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Crab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -397,7 +397,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1473787657647493341}
   - component: {fileID: 4139452430451816891}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Detector
   m_TagString: Untagged
   m_Icon: {fileID: 0}

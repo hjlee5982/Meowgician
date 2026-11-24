@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7564056935875859290}
   - component: {fileID: 8164177023085925021}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: HitBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -79,7 +79,7 @@ GameObject:
   - component: {fileID: 8791013876967491400}
   - component: {fileID: 6472184310805696376}
   - component: {fileID: 3485750437390755534}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Spider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -548,7 +548,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6973714292333346785}
   - component: {fileID: 6908467973124798401}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Detector
   m_TagString: Untagged
   m_Icon: {fileID: 0}

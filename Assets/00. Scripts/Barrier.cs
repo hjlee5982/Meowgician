@@ -41,6 +41,23 @@ public class Barrier : MonoBehaviour
 
     public event Action HpDepleted;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    /// <summary>개발 빌드 전용: 켜면 피해를 받지 않는다(성능 측정 등).</summary>
+    public static bool DebugInvincible;
+
+    /// <summary>개발 빌드 전용: 영구강화(방어막) 레벨이 바뀐 뒤 최대 체력을 다시 계산하고 체력을 가득 채운다.</summary>
+    public void DebugReapplyReinforce()
+    {
+        // Awake 전(방어막이 아직 한 번도 활성화되지 않음)에는 Awake가 영구강화 보너스를 직접 적용한다.
+        // 이때 건드리면 기준 체력(configuredMaxHp)이 0이라 최대 체력이 1로 덮어써진다.
+        if (configuredMaxHp <= 0) return;
+
+        ApplyTitleBarrierBonus();
+        InitializeHpPools();
+        RefreshVisuals(animateGauge: false);
+    }
+#endif
+
     private void Awake()
     {
         if (hpGauge == null)
@@ -93,6 +110,9 @@ public class Barrier : MonoBehaviour
     public void TakeDamage(int amount)
     {
         if (amount <= 0 || Hp <= 0) return;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (DebugInvincible) return;
+#endif
 
         int remaining = amount;
         if (bufferHp > 0)

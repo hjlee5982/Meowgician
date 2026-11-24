@@ -49,6 +49,31 @@ public class GameSpeedController : MonoBehaviour
 
         if (!simulationPaused)
             Time.timeScale = 1f;
+
+        if (baseFixedDeltaCaptured)
+            Time.fixedDeltaTime = baseFixedDelta;
+    }
+
+    // 배속이 높을수록 한 프레임에 돌아야 할 물리 스텝이 배속만큼 늘어나고,
+    // 프레임이 느려지면 더 늘어나는 악순환(스텝 폭증)이 생긴다.
+    // 물리 스텝 길이를 배속에 비례해 늘려서 "프레임당 약 1스텝"으로 유지한다.
+    private float baseFixedDelta = 0.02f;
+    private bool baseFixedDeltaCaptured;
+    private float appliedFixedScale = 1f;
+
+    private void LateUpdate()
+    {
+        if (!baseFixedDeltaCaptured)
+        {
+            baseFixedDelta = Time.fixedDeltaTime;
+            baseFixedDeltaCaptured = true;
+        }
+
+        float scale = Mathf.Max(1f, Time.timeScale);
+        if (Mathf.Approximately(scale, appliedFixedScale)) return;
+
+        appliedFixedScale = scale;
+        Time.fixedDeltaTime = baseFixedDelta * scale;
     }
 
     public void SetDesiredSpeed(float speed)

@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8775196969486452667}
   - component: {fileID: 7652424895318100819}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: HitBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -155,7 +155,7 @@ GameObject:
   - component: {fileID: 1954893839295624065}
   - component: {fileID: 1154999913723181113}
   - component: {fileID: 9069835352554434243}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Ghost
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -548,7 +548,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5743345857469093152}
   - component: {fileID: 2467741459361967546}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Detector
   m_TagString: Untagged
   m_Icon: {fileID: 0}

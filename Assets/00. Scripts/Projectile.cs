@@ -276,11 +276,11 @@ public class Projectile : MonoBehaviour
 
     private void ApplyRockColliderHits()
     {
-        Collider2D myCollider = GetComponent<Collider2D>();
+        Collider2D myCollider = SelfCollider;
         if (myCollider == null) return;
 
         overlapBuffer.Clear();
-        ContactFilter2D filter = ContactFilter2D.noFilter;
+        ContactFilter2D filter = GameLayers.MonsterOverlapFilter;
         Physics2D.OverlapCollider(myCollider, filter, overlapBuffer);
 
         for (int i = 0; i < overlapBuffer.Count; i++)
@@ -349,11 +349,11 @@ public class Projectile : MonoBehaviour
 
     private void ApplyOverlapHits()
     {
-        Collider2D myCollider = GetComponent<Collider2D>();
+        Collider2D myCollider = SelfCollider;
         if (myCollider == null) return;
 
         overlapBuffer.Clear();
-        ContactFilter2D filter = ContactFilter2D.noFilter;
+        ContactFilter2D filter = GameLayers.MonsterOverlapFilter;
         Physics2D.OverlapCollider(myCollider, filter, overlapBuffer);
 
         for (int i = 0; i < overlapBuffer.Count; i++)
@@ -379,6 +379,7 @@ public class Projectile : MonoBehaviour
 
     private void Update()
     {
+        using var _perf = PerfProbe.Measure(PerfProbe.Id.ProjectileUpdate);
         if (!initialized || finished) return;
 
         if (instantLinger)
@@ -419,11 +420,11 @@ public class Projectile : MonoBehaviour
 
     private void PullFieldMonsters()
     {
-        Monster[] monsters = FindObjectsByType<Monster>(FindObjectsSortMode.None);
+        var monsters = Monster.Active;
         Vector3 pullOrigin = transform.position;
         float radiusSqr = WindPullRadius * WindPullRadius;
 
-        for (int i = 0; i < monsters.Length; i++)
+        for (int i = 0; i < monsters.Count; i++)
         {
             Monster monster = monsters[i];
             if (monster == null || monster.IsDead) continue;
@@ -437,6 +438,7 @@ public class Projectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        using var _perf = PerfProbe.Measure(PerfProbe.Id.ProjectileTrigger);
         if (!initialized || finished) return;
 
         if (instantLinger)
@@ -614,11 +616,11 @@ public class Projectile : MonoBehaviour
     {
         if (multiHitInProgress || multiHitRemaining <= 0) return;
 
-        Collider2D selfCollider = GetComponent<Collider2D>();
+        Collider2D selfCollider = SelfCollider;
         if (selfCollider == null) return;
 
         overlapBuffer.Clear();
-        ContactFilter2D filter = ContactFilter2D.noFilter;
+        ContactFilter2D filter = GameLayers.MonsterOverlapFilter;
         Physics2D.OverlapCollider(selfCollider, filter, overlapBuffer);
 
         for (int i = 0; i < overlapBuffer.Count; i++)
@@ -638,7 +640,7 @@ public class Projectile : MonoBehaviour
     {
         if (grimoireFocusMonster == null || grimoireFocusMonster.IsDead) return false;
 
-        Collider2D selfCollider = GetComponent<Collider2D>();
+        Collider2D selfCollider = SelfCollider;
         if (selfCollider == null) return false;
 
         Collider2D focusHitBox = grimoireFocusMonster.HitBox;
@@ -894,11 +896,11 @@ public class Projectile : MonoBehaviour
 
     private static Monster FindNearestMonster(Vector3 origin, float searchRange, Monster exclude)
     {
-        Monster[] monsters = FindObjectsByType<Monster>(FindObjectsSortMode.None);
+        var monsters = Monster.Active;
         Monster nearest = null;
         float nearestDistance = searchRange;
 
-        for (int i = 0; i < monsters.Length; i++)
+        for (int i = 0; i < monsters.Count; i++)
         {
             Monster monster = monsters[i];
             if (monster == null || monster == exclude || !monster.CanBeTargeted) continue;
@@ -924,6 +926,16 @@ public class Projectile : MonoBehaviour
                || viewport.x > 1f + offScreenMargin
                || viewport.y < -offScreenMargin
                || viewport.y > 1f + offScreenMargin;
+    }
+
+    private Collider2D cachedSelfCollider;
+    private Collider2D SelfCollider
+    {
+        get
+        {
+            if (cachedSelfCollider == null) cachedSelfCollider = GetComponent<Collider2D>();
+            return cachedSelfCollider;
+        }
     }
 
     private void OnDestroy()

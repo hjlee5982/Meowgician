@@ -406,6 +406,9 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         occupiedSlots.AddRange(indices);
     }
 
+    /// <summary>이 아이템이 가방에서 차지하고 있는 슬롯 번호들.</summary>
+    public IReadOnlyList<int> OccupiedSlots => occupiedSlots;
+
     public void GetShapeOffsets(List<Vector2Int> results)
     {
         results.Clear();

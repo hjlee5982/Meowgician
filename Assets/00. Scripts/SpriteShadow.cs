@@ -41,6 +41,7 @@ public class SpriteShadow : MonoBehaviour
 
     private void LateUpdate()
     {
+        using var _perf = PerfProbe.Measure(PerfProbe.Id.SpriteShadowLate);
         Sync();
     }
 

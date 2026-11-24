@@ -119,6 +119,13 @@ public static class EnhancePanelFiller
         rect.sizeDelta = new Vector2(width, height);
     }
 
+    /// <summary>옵션 설명 문장(수치가 채워진 한글 텍스트)을 돌려준다.</summary>
+    public static string DescribeOption(EnhanceOptionData option)
+    {
+        if (option == null) return string.Empty;
+        return BuildDescription(option.DescKey, CollectValues(GameDataRepository.GetEnhanceEffects(option.Id)));
+    }
+
     private static void ApplyOption(Transform optionRoot, EnhanceOptionData option)
     {
         List<EnhanceOptionEffectData> effects = GameDataRepository.GetEnhanceEffects(option.Id);

@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// 타이틀 씬 설정 패널. 배경음/효과음 켜고 끄기를 토글로 조절한다.
+/// 타이틀 씬 설정 패널. 배경음/효과음 볼륨을 슬라이더로 조절한다.
 /// </summary>
 public class TitleSettingsUI : MonoBehaviour
 {
@@ -17,17 +17,9 @@ public class TitleSettingsUI : MonoBehaviour
     [SerializeField] private GameObject panelRoot;
     [SerializeField] private Button closeButton;
 
-    [Header("Toggles")]
-    [SerializeField] private Button bgmToggleButton;
-    [SerializeField] private Image bgmToggleImage;
-    [SerializeField] private Button sfxToggleButton;
-    [SerializeField] private Image sfxToggleImage;
-
-    [Header("Toggle Sprites")]
-    [Tooltip("켜짐 상태 스프라이트 (UI_79).")]
-    [SerializeField] private Sprite onSprite;
-    [Tooltip("꺼짐 상태 스프라이트 (UI_78). 표시 시 좌우 반전한다.")]
-    [SerializeField] private Sprite offSprite;
+    [Header("Sliders")]
+    [SerializeField] private Slider bgmSlider;
+    [SerializeField] private Slider sfxSlider;
 
     private void Awake()
     {
@@ -36,12 +28,8 @@ public class TitleSettingsUI : MonoBehaviour
         if (closeButton != null)
             closeButton.onClick.AddListener(Close);
 
-        if (bgmToggleButton != null)
-            bgmToggleButton.onClick.AddListener(OnBgmToggleClicked);
-        if (sfxToggleButton != null)
-            sfxToggleButton.onClick.AddListener(OnSfxToggleClicked);
-
-        ResolveToggleImages();
+        SetupSlider(bgmSlider, OnBgmSliderChanged);
+        SetupSlider(sfxSlider, OnSfxSliderChanged);
 
         if (panelRoot != null)
             panelRoot.SetActive(false);
@@ -76,60 +64,34 @@ public class TitleSettingsUI : MonoBehaviour
         SetMainUiVisible(true);
     }
 
-    private void OnBgmToggleClicked()
+    private static void SetupSlider(Slider slider, UnityEngine.Events.UnityAction<float> onChanged)
     {
-        GameAudioSettings.ToggleBgm();
-        RefreshTogglesFromSettings();
+        if (slider == null)
+            return;
+
+        slider.minValue = 0f;
+        slider.maxValue = 1f;
+        slider.wholeNumbers = false;
+        slider.onValueChanged.RemoveListener(onChanged);
+        slider.onValueChanged.AddListener(onChanged);
     }
 
-    private void OnSfxToggleClicked()
+    private void OnBgmSliderChanged(float value)
     {
-        GameAudioSettings.ToggleSfx();
-        RefreshTogglesFromSettings();
+        GameAudioSettings.SetBgmVolume(value);
+    }
+
+    private void OnSfxSliderChanged(float value)
+    {
+        GameAudioSettings.SetSfxVolume(value);
     }
 
     private void RefreshTogglesFromSettings()
     {
-        ApplyToggleVisual(bgmToggleImage, GameAudioSettings.BgmEnabled);
-        ApplyToggleVisual(sfxToggleImage, GameAudioSettings.SfxEnabled);
-    }
-
-    private void ApplyToggleVisual(Image image, bool enabled)
-    {
-        if (image == null)
-            return;
-
-        if (enabled)
-        {
-            if (onSprite != null)
-                image.sprite = onSprite;
-            SetFlipX(image.rectTransform, false);
-        }
-        else
-        {
-            if (offSprite != null)
-                image.sprite = offSprite;
-            SetFlipX(image.rectTransform, true);
-        }
-    }
-
-    private static void SetFlipX(RectTransform rect, bool flip)
-    {
-        if (rect == null)
-            return;
-
-        Vector3 scale = rect.localScale;
-        float absX = Mathf.Abs(scale.x) < 0.0001f ? 1f : Mathf.Abs(scale.x);
-        scale.x = flip ? -absX : absX;
-        rect.localScale = scale;
-    }
-
-    private void ResolveToggleImages()
-    {
-        if (bgmToggleImage == null && bgmToggleButton != null)
-            bgmToggleImage = bgmToggleButton.GetComponent<Image>();
-        if (sfxToggleImage == null && sfxToggleButton != null)
-            sfxToggleImage = sfxToggleButton.GetComponent<Image>();
+        if (bgmSlider != null)
+            bgmSlider.SetValueWithoutNotify(GameAudioSettings.BgmVolume);
+        if (sfxSlider != null)
+            sfxSlider.SetValueWithoutNotify(GameAudioSettings.SfxVolume);
     }
 
     private void SetMainUiVisible(bool visible)

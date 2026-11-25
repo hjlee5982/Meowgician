@@ -12,7 +12,6 @@ public class Barrier : MonoBehaviour
         public Sprite sprite;
     }
 
-    private const int BufferPercentPerLevel = 20;
     private static readonly Color BufferGaugeColor = new Color(78f / 255f, 221f / 255f, 252f / 255f, 1f);
 
     [SerializeField] private int maxHp = 100;
@@ -31,7 +30,6 @@ public class Barrier : MonoBehaviour
     private int bufferHp;
     private int coreMaxHp;
     private int bufferMaxHp;
-    private int reinforceLevel;
     private Tween hpGaugeTween;
     private Tween bufferGaugeTween;
     private Image hpGaugeFillImage;
@@ -79,15 +77,14 @@ public class Barrier : MonoBehaviour
     private void ApplyTitleBarrierBonus()
     {
         float multiplier = 1f + TitleEnhanceProgress.CurrentBarrierPercent / 100f;
-        maxHp = Mathf.Max(1, Mathf.RoundToInt(configuredMaxHp * multiplier));
-        reinforceLevel = Mathf.Max(0, TitleEnhanceProgress.GetLevel(TitleEnhanceProgress.BarrierId));
+        maxHp = Mathf.Max(configuredMaxHp, Mathf.RoundToInt(configuredMaxHp * multiplier));
     }
 
     private void InitializeHpPools()
     {
-        int bufferPercent = Mathf.Clamp(reinforceLevel * BufferPercentPerLevel, 0, 100);
-        bufferMaxHp = Mathf.Clamp(Mathf.RoundToInt(maxHp * (bufferPercent / 100f)), 0, maxHp);
-        coreMaxHp = Mathf.Max(0, maxHp - bufferMaxHp);
+        // 기본 체력(초록)은 그대로, 영구강화로 늘어난 만큼이 추가 체력(파랑). 피해는 파랑부터 깎인다.
+        coreMaxHp = configuredMaxHp;
+        bufferMaxHp = Mathf.Max(0, maxHp - configuredMaxHp);
         bufferHp = bufferMaxHp;
         coreHp = coreMaxHp;
     }
@@ -160,12 +157,14 @@ public class Barrier : MonoBehaviour
         ResolveHpGaugeFillImage();
         EnsureBufferGaugeFill();
         hpGauge.minValue = 0f;
-        hpGauge.maxValue = maxHp;
+        hpGauge.maxValue = Mathf.Max(1, coreMaxHp);
         KillHpGaugeTween();
 
-        // 완충이 남아 있는 동안 본래 게이지는 줄지 않는다 (bufferMax + core).
-        float displayHp = bufferMaxHp + coreHp;
-        float bufferRatio = maxHp > 0 ? bufferHp / (float)maxHp : 0f;
+        // 초록 = 기본 체력(막대 전체 = 1), 파랑 = 영구강화로 얻은 추가 체력으로 초록 위에 왼쪽부터 겹친다.
+        // 파랑 길이 = 남은 추가 체력 / 기본 체력 (강화 1단계 최대 0.2, 3단계 0.6, 5단계 1.0).
+        // 파랑이 먼저 깎이고(오른쪽 끝부터), 다 없어진 뒤에야 아래의 초록이 줄어든다.
+        float displayHp = coreHp;
+        float bufferRatio = coreMaxHp > 0 ? Mathf.Clamp01(bufferHp / (float)coreMaxHp) : 0f;
         bool showBuffer = bufferMaxHp > 0;
 
         if (bufferGaugeFillImage != null)
@@ -177,7 +176,7 @@ public class Barrier : MonoBehaviour
         if (!animate || !hpGauge.gameObject.activeInHierarchy)
         {
             hpGauge.value = displayHp;
-            ApplyHpGaugeColor(GetHpRatio(displayHp));
+            ApplyHpGaugeColor(GetCoreRatio(coreHp));
             SetBufferFillRatio(bufferRatio);
             return;
         }
@@ -187,7 +186,7 @@ public class Barrier : MonoBehaviour
             .DOValue(displayHp, hpGaugeTweenDuration)
             .SetEase(Ease.OutQuad)
             .SetUpdate(true)
-            .OnUpdate(() => ApplyHpGaugeColor(GetHpRatio(hpGauge.value)));
+            .OnUpdate(() => ApplyHpGaugeColor(GetCoreRatio(hpGauge.value)));
 
         if (showBuffer && bufferGaugeFillImage != null)
         {
@@ -202,13 +201,14 @@ public class Barrier : MonoBehaviour
         }
     }
 
+    /// <summary>파랑 바의 현재 길이 비율(전체 막대 길이 대비).</summary>
     private float GetBufferFillRatio()
     {
         if (bufferGaugeFillImage == null)
             return 0f;
 
         RectTransform rt = bufferGaugeFillImage.rectTransform;
-        return Mathf.Clamp01(rt.anchorMax.x);
+        return Mathf.Clamp01(rt.anchorMax.x - rt.anchorMin.x);
     }
 
     private void SetBufferFillRatio(float ratio)
@@ -217,8 +217,8 @@ public class Barrier : MonoBehaviour
             return;
 
         float clamped = Mathf.Clamp01(ratio);
+        // 파랑은 막대 전체 길이를 기준으로 왼쪽부터 채워지고 오른쪽 끝부터 줄어든다.
         RectTransform rt = bufferGaugeFillImage.rectTransform;
-        // 왼쪽 고정, 가로 비율만 조절 (Sliced)
         rt.anchorMin = new Vector2(0f, 0f);
         rt.anchorMax = new Vector2(clamped, 1f);
         rt.offsetMin = Vector2.zero;
@@ -284,9 +284,9 @@ public class Barrier : MonoBehaviour
             hpGaugeEmptyColor = new Color(1f, 0.42f, 0.42f, 1f);
     }
 
-    private float GetHpRatio(float currentHp)
+    private float GetCoreRatio(float currentCoreHp)
     {
-        return maxHp <= 0 ? 0f : Mathf.Clamp01(currentHp / maxHp);
+        return coreMaxHp <= 0 ? 0f : Mathf.Clamp01(currentCoreHp / coreMaxHp);
     }
 
     private void ApplyHpGaugeColor(float ratio)

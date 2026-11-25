@@ -14,15 +14,9 @@ public class GameSettingsUI : MonoBehaviour
     [SerializeField] private GameObject panelRoot;
     [SerializeField] private Button closeButton;
 
-    [Header("Toggles")]
-    [SerializeField] private Button bgmToggleButton;
-    [SerializeField] private Image bgmToggleImage;
-    [SerializeField] private Button sfxToggleButton;
-    [SerializeField] private Image sfxToggleImage;
-
-    [Header("Toggle Sprites")]
-    [SerializeField] private Sprite onSprite;
-    [SerializeField] private Sprite offSprite;
+    [Header("Sliders")]
+    [SerializeField] private Slider bgmSlider;
+    [SerializeField] private Slider sfxSlider;
 
     public static GameSettingsUI Instance { get; private set; }
 
@@ -52,19 +46,8 @@ public class GameSettingsUI : MonoBehaviour
             closeButton.onClick.AddListener(Close);
         }
 
-        if (bgmToggleButton != null)
-        {
-            bgmToggleButton.onClick.RemoveListener(OnBgmToggleClicked);
-            bgmToggleButton.onClick.AddListener(OnBgmToggleClicked);
-        }
-
-        if (sfxToggleButton != null)
-        {
-            sfxToggleButton.onClick.RemoveListener(OnSfxToggleClicked);
-            sfxToggleButton.onClick.AddListener(OnSfxToggleClicked);
-        }
-
-        ResolveToggleImages();
+        SetupSlider(bgmSlider, OnBgmSliderChanged);
+        SetupSlider(sfxSlider, OnSfxSliderChanged);
 
         if (panelRoot != null)
             panelRoot.SetActive(false);
@@ -91,10 +74,10 @@ public class GameSettingsUI : MonoBehaviour
             openButton.onClick.RemoveListener(Open);
         if (closeButton != null)
             closeButton.onClick.RemoveListener(Close);
-        if (bgmToggleButton != null)
-            bgmToggleButton.onClick.RemoveListener(OnBgmToggleClicked);
-        if (sfxToggleButton != null)
-            sfxToggleButton.onClick.RemoveListener(OnSfxToggleClicked);
+        if (bgmSlider != null)
+            bgmSlider.onValueChanged.RemoveListener(OnBgmSliderChanged);
+        if (sfxSlider != null)
+            sfxSlider.onValueChanged.RemoveListener(OnSfxSliderChanged);
 
         if (Instance == this)
         {
@@ -150,60 +133,34 @@ public class GameSettingsUI : MonoBehaviour
             openButtonRoot.SetActive(showButton);
     }
 
-    private void OnBgmToggleClicked()
+    private static void SetupSlider(Slider slider, UnityEngine.Events.UnityAction<float> onChanged)
     {
-        GameAudioSettings.ToggleBgm();
-        RefreshTogglesFromSettings();
+        if (slider == null)
+            return;
+
+        slider.minValue = 0f;
+        slider.maxValue = 1f;
+        slider.wholeNumbers = false;
+        slider.onValueChanged.RemoveListener(onChanged);
+        slider.onValueChanged.AddListener(onChanged);
     }
 
-    private void OnSfxToggleClicked()
+    private void OnBgmSliderChanged(float value)
     {
-        GameAudioSettings.ToggleSfx();
-        RefreshTogglesFromSettings();
+        GameAudioSettings.SetBgmVolume(value);
+    }
+
+    private void OnSfxSliderChanged(float value)
+    {
+        GameAudioSettings.SetSfxVolume(value);
     }
 
     private void RefreshTogglesFromSettings()
     {
-        ApplyToggleVisual(bgmToggleImage, GameAudioSettings.BgmEnabled);
-        ApplyToggleVisual(sfxToggleImage, GameAudioSettings.SfxEnabled);
-    }
-
-    private void ApplyToggleVisual(Image image, bool enabled)
-    {
-        if (image == null)
-            return;
-
-        if (enabled)
-        {
-            if (onSprite != null)
-                image.sprite = onSprite;
-            SetFlipX(image.rectTransform, false);
-        }
-        else
-        {
-            if (offSprite != null)
-                image.sprite = offSprite;
-            SetFlipX(image.rectTransform, true);
-        }
-    }
-
-    private static void SetFlipX(RectTransform rect, bool flip)
-    {
-        if (rect == null)
-            return;
-
-        Vector3 scale = rect.localScale;
-        float absX = Mathf.Abs(scale.x) < 0.0001f ? 1f : Mathf.Abs(scale.x);
-        scale.x = flip ? -absX : absX;
-        rect.localScale = scale;
-    }
-
-    private void ResolveToggleImages()
-    {
-        if (bgmToggleImage == null && bgmToggleButton != null)
-            bgmToggleImage = bgmToggleButton.GetComponent<Image>();
-        if (sfxToggleImage == null && sfxToggleButton != null)
-            sfxToggleImage = sfxToggleButton.GetComponent<Image>();
+        if (bgmSlider != null)
+            bgmSlider.SetValueWithoutNotify(GameAudioSettings.BgmVolume);
+        if (sfxSlider != null)
+            sfxSlider.SetValueWithoutNotify(GameAudioSettings.SfxVolume);
     }
 
     private void ResolveReferences()
@@ -237,18 +194,18 @@ public class GameSettingsUI : MonoBehaviour
                 closeButton = found.GetComponent<Button>();
         }
 
-        if (bgmToggleButton == null && panelRoot != null)
+        if (bgmSlider == null && panelRoot != null)
         {
-            Transform found = panelRoot.transform.Find("Panel/배경음Toggle");
+            Transform found = panelRoot.transform.Find("Panel/배경음Slider");
             if (found != null)
-                bgmToggleButton = found.GetComponent<Button>();
+                bgmSlider = found.GetComponent<Slider>();
         }
 
-        if (sfxToggleButton == null && panelRoot != null)
+        if (sfxSlider == null && panelRoot != null)
         {
-            Transform found = panelRoot.transform.Find("Panel/효과음Toggle");
+            Transform found = panelRoot.transform.Find("Panel/효과음Slider");
             if (found != null)
-                sfxToggleButton = found.GetComponent<Button>();
+                sfxSlider = found.GetComponent<Slider>();
         }
     }
 }

@@ -148,7 +148,7 @@ public class BgmPlayer : MonoBehaviour
     {
         if (source == null) return;
 
-        source.volume = volume * fade;
+        source.volume = volume * fade * GameAudioSettings.BgmVolume;
         if (currentTrack < 0 || source.clip == null) return;
 
         // 볼륨 0(또는 mute)으로 시작한 소스는 재생이 시작되지 않거나 isPlaying이 거짓으로 나오는 경우가 있다.
